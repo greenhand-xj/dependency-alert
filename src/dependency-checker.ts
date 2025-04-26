@@ -1,13 +1,9 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { DependencyFieldInfo, DependencyFieldChanges, parsePackageJson, detectDependencyFieldChanges } from './utils';
-import { GitMonitor, GitOperationType, GitOperationEvent } from './git-monitor';
-import { DependencyFieldType, getConfiguration } from './config';
+import { GitMonitor, GitOperationEvent } from './git-monitor';
+import { getConfiguration } from './config';
 
-const execAsync = promisify(exec);
 
 /**
  * 包管理器类型
@@ -16,15 +12,6 @@ export enum PackageManagerType {
   NPM = 'npm',
   Yarn = 'yarn',
   PNPM = 'pnpm'
-}
-
-/**
- * 安装依赖的结果
- */
-export interface InstallResult {
-  success: boolean;
-  output: string;
-  error?: string;
 }
 
 /**
@@ -273,53 +260,6 @@ export class DependencyChecker implements vscode.Disposable {
       return PackageManagerType.NPM; // 默认返回npm
     }
   }
-
-  /**
-   * 安装依赖
-   * @param workspaceFolder 工作区文件夹路径
-   * @param packageManager 包管理器类型（可选，若不提供则自动检测）
-   * @returns 安装结果
-   */
-  public async installDependencies(
-    workspaceFolder: string,
-    packageManager?: PackageManagerType
-  ): Promise<InstallResult> {
-    try {
-      // 如果未提供包管理器类型，则自动检测
-      const pm = packageManager || await this.detectPackageManager(workspaceFolder);
-
-      // 根据包管理器类型选择安装命令
-      let command: string;
-      switch (pm) {
-        case PackageManagerType.Yarn:
-          command = 'yarn';
-          break;
-        case PackageManagerType.PNPM:
-          command = 'pnpm install';
-          break;
-        case PackageManagerType.NPM:
-        default:
-          command = 'npm install';
-          break;
-      }
-
-      // 执行安装命令
-      const { stdout, stderr } = await execAsync(command, { cwd: workspaceFolder });
-
-      return {
-        success: true,
-        output: stdout
-      };
-    } catch (error) {
-      console.error('安装依赖失败:', error);
-      return {
-        success: false,
-        output: '',
-        error: error instanceof Error ? error.message : String(error)
-      };
-    }
-  }
-
 
   /**
    * 检查文件是否存在
