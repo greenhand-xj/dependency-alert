@@ -1,0 +1,111 @@
+{
+  "name": "dependency-alert",
+  "displayName": "Dependency Alert",
+  "description": "检测依赖文件变更并提示安装依赖",
+  "version": "0.1.0",
+  "publisher": "greenhand-xj",
+  "author": {
+    "name": "Eric Xu"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/greenhand-xj/dependency-alert"
+  },
+  "homepage": "https://github.com/greenhand-xj/dependency-alert",
+  "bugs": {
+    "url": "https://github.com/greenhand-xj/dependency-alert/issues"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "dependencies",
+    "package.json",
+    "npm",
+    "yarn",
+    "pnpm",
+    "git"
+  ],
+  "icon": "images/icon.png",
+  "activationEvents": [
+    "onStartupFinished",
+    "workspaceContains:package.json",
+    "workspaceContains:package-lock.json",
+    "workspaceContains:yarn.lock",
+    "workspaceContains:pnpm-lock.yaml"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "dependency-alert.installDependencies",
+        "title": "安装更新的依赖"
+      },
+      {
+        "command": "dependency-alert.showChanges",
+        "title": "查看依赖文件变更"
+      }
+    ],
+    "configuration": {
+      "title": "Dependency Alert",
+      "properties": {
+        "dependencyAlert.autoInstall": {
+          "type": "boolean",
+          "default": false,
+          "description": "自动安装更新的依赖"
+        },
+        "dependencyAlert.gitOperationTypes": {
+          "type": "array",
+          "default": [
+            "pull",
+            "merge"
+          ],
+          "description": "要监控的git操作类型"
+        },
+        "dependencyAlert.monitoredFiles": {
+          "type": "array",
+          "default": [
+            "package.json"
+          ],
+          "description": "要监控的依赖文件"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run package",
+    "compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/sinon": "^17.0.4",
+    "@types/vscode": "^1.99.0",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "@typescript-eslint/parser": "^8.28.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "esbuild": "^0.25.1",
+    "eslint": "^9.23.0",
+    "npm-run-all": "^4.1.5",
+    "sinon": "^20.0.0",
+    "typescript": "^5.8.2"
+  },
+  "extensionDependencies": [
+    "vscode.git"
+  ]
+}
