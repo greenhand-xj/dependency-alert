@@ -31,8 +31,8 @@ export class DependencyChecker implements vscode.Disposable {
         }
       ),
       vscode.commands.registerCommand('dependency-alert.showDiff',
-        (packageJsonPath: string) => {
-          this.showPackageJsonDiff(packageJsonPath)
+        (packageJsonPath: string, event: GitOperationEvent) => {
+          this.showPackageJsonDiff(packageJsonPath, event)
         }
       )
     );
@@ -70,7 +70,7 @@ export class DependencyChecker implements vscode.Disposable {
       // 检查每个依赖文件变更
       for (const depChange of event.dependencyChanges) {
         if (depChange.changed && depChange.file.endsWith('package.json')) {
-          this.showAction(path.join(event.workspaceFolder.uri.fsPath, depChange.file))
+          this.showAction(path.join(event.workspaceFolder.uri.fsPath, depChange.file), event)
         }
       }
     } catch (error) {
@@ -81,7 +81,7 @@ export class DependencyChecker implements vscode.Disposable {
   /**
    * 显示操作
    */
-  private showAction(packageJsonPath: string): void {
+  private showAction(packageJsonPath: string, detail: GitOperationEvent): void {
     try {
       // 构建通知消息
       const message = '检测到 package.json 文件变更';
@@ -93,7 +93,7 @@ export class DependencyChecker implements vscode.Disposable {
       notification.command = {
         title: '查看变更',
         command: 'dependency-alert.showDiff',
-        arguments: [packageJsonPath]
+        arguments: [packageJsonPath, detail]
       };
       notification.show();
 
@@ -114,7 +114,7 @@ export class DependencyChecker implements vscode.Disposable {
           { title: '查看变更' }
         ).then(selection => {
           if (selection) {
-            this.showPackageJsonDiff(packageJsonPath);
+            this.showPackageJsonDiff(packageJsonPath, detail);
           }
         });
       } else {
@@ -133,7 +133,7 @@ export class DependencyChecker implements vscode.Disposable {
             this.handleInstallDependencies(workspaceFolder);
           } else if (selection === viewChangesItem) {
             // 查看变更
-            this.showPackageJsonDiff(packageJsonPath);
+            this.showPackageJsonDiff(packageJsonPath, detail);
           }
         });
       }
@@ -192,7 +192,7 @@ export class DependencyChecker implements vscode.Disposable {
   /**
    * 显示package.json文件的差异
    */
-  private async showPackageJsonDiff(packageJsonPath: string): Promise<void> {
+  private async showPackageJsonDiff(packageJsonPath: string, detail: GitOperationEvent): Promise<void> {
     try {
       // 获取当前文件的URI
       const currentUri = vscode.Uri.file(packageJsonPath);
@@ -205,14 +205,14 @@ export class DependencyChecker implements vscode.Disposable {
       }
 
       // 获取文件对应的Git URI
-      const headUri = git.toGitUri(currentUri, 'HEAD~1');
+      const headUri = git.toGitUri(currentUri, detail.prevHeadCommit);
 
       // 使用VS Code内置的差异查看器显示文件
       await vscode.commands.executeCommand(
         'vscode.diff',
         headUri,           // 原始文件 (HEAD版本)
         currentUri,        // 当前文件
-        'package.json 依赖变更（HEAD~1 ↔ 当前）'  // 标题
+        `package.json 依赖变更（${detail.prevHeadCommit} ↔ 当前）` // 标题
       );
     } catch (error) {
       console.error('显示package.json差异失败:', error);
