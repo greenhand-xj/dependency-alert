@@ -2,7 +2,7 @@
   "name": "dependency-alert",
   "displayName": "Dependency Alert",
   "description": "检测依赖文件变更并提示安装依赖",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "eric-fe",
   "author": {
     "name": "Eric Xu"
